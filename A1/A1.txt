@@ -1,0 +1,75 @@
+1
+a. 
+(define (domain blocks_world ) 
+(:requirements :strips :typing) 
+(:types block table - object
+) 
+(:predicates (on ?obj1 - block ?obj2 - object)
+             (clear ?obj - object )
+             (is_table ?obj - object)
+) 
+(:action MOVE
+:parameters ( ?b - block ?obj1 - object ?obj2 - object) 
+:precondition (and (on ?b ?obj1) (clear ?b) (clear ?obj2))
+:effect (and 
+  (on ?b ?obj2) 
+  (not (on ?b ?obj1)) 
+  (clear ?obj1) 
+  (when (not (is_table ?obj2)) (not (clear ?obj2)))
+)
+)
+) 
+
+b.
+Clear(Table) and IsTable(Table) are always true
+
+
+On(A, B) ^ On(B, Table) ^ Clear(A)
+        |
+Move(A, B, Table)
+        |
+        V
+On(A, Table) ^ On(B, Table) ^ Clear(A) ^ Clear(B) --Move(A, Table, B)--> On(B, Table) ^ On(A, B) ^ Clear(A)
+        |         
+Move(B, Table, A)
+        |                 
+        V
+On(B, A) ^ On(A, Table) ^ Clear(B)
+
+c.
+On(B, A) ^ On(A, Table) ^ Clear(B)
+        |         
+Move(B, Table, A)
+        |                 
+        V
+On(A, Table) ^ On(B, Table) ^ Clear(A) ^ Clear(B) --Move(B, A, Table)--> On(B, A) ^ On(A, Table) ^ Clear(B)
+        |
+Move(A, B, Table)
+        |
+        V
+On(A, B) ^ On(B, Table) ^ Clear(A)
+
+d.
+Move(A, B, Table)
+Move(B, Table, A)
+
+2.
+a.
+Assign(var1, var2)
+Precondition: Value(var1, val1) ^ Value(var2, val2)
+Effect: Value(var2, val1) ^ not Value(var2, val2)
+
+b.
+Have another action schema for object creation
+Create(var)
+Precondition:
+Effect: Value(var, null)
+
+Initial state is Value(var1, val1) ^ Value(var2, val2)
+Goal state is Value(var1, val2) ^ Value(var2, val1)
+
+Then the following plan is valid for the task
+Create(temp)
+Assign(var1, temp)
+Assign(var2, var1)
+Assign(temp, var2)
