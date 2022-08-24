@@ -33,8 +33,6 @@ class GeneratePDDL_Stationary :
         self.action_strings = ""
         self.problem_string = ""
         self.object_strings = self.addHeader("objects")
-        #self.generateCarSpeeds()
-        #self.generateGridCells()
 
 
     def addDomainHeader(self, name='default_header') :
@@ -180,8 +178,11 @@ class GeneratePDDL_Stationary :
                 for t in range(self.width) :
                     self.grid_cell_list.append("pt{}pt{}pt{}".format(w, lane, t))
  
+    def coord_to_idx(self, x, y, t):
+        return x * (self.num_lanes * self.width) + y * self.width + t
+
     def get_grid_cell(self, x, y, t):
-        return self.grid_cell_list[x * (self.num_lanes * self.width) + y * self.width + t]
+        return self.grid_cell_list[self.coord_to_idx(x, y, t)]
 
     def generateInitString(self) :
         '''
@@ -208,21 +209,25 @@ class GeneratePDDL_Stationary :
         return "(at apn1 apt2) (at tru1 pos1) (at obj11 pos1) (at obj12 pos1) (at obj13 pos1) (at tru2 pos2) (at obj21 pos2) (at obj22 pos2)
                 (at obj23 pos2) (in-city pos1 cit1) (in-city apt1 cit1) (in-city pos2 cit2) (in-city apt2 cit2)" 
         '''  
+        #from time import time
         agent_pos = self.state.agent.position
         car_list = [f"(at {self.get_grid_cell(agent_pos.x, agent_pos.y, 0)} agent1)"]
         
+        #start = time()
+        blocked_cells = set()
         for car in self.state.cars:
             x, y = car.position.x, car.position.y
             speed = -car.speed_range[0]
             for t in range(self.width):
-                if x >= self.width:
+                # Skip cars that don't affect
+                if x + speed < self.width - 1 - 3 * t or x > self.width - 1 - t:
                     x -= speed
+                    x %= self.width
                     continue
-                if x < 0: break
-
                 grid_cell = self.get_grid_cell(x, y, t)
-                car_list.append(f"(at {grid_cell} car{x}{y}{t})")
-                car_list.append(f"(blocked {grid_cell})")
+                if self.coord_to_idx(x, y, t) not in blocked_cells:
+                    car_list.append(f"(blocked {grid_cell})")
+                    blocked_cells.add(self.coord_to_idx(x, y, t))
 
                 if t == 0:
                     x -= speed
@@ -233,20 +238,32 @@ class GeneratePDDL_Stationary :
                 for tx in range(x + 1, x + speed):
                     tx %= self.width
                     grid_cell = self.get_grid_cell(tx, y, t)
+                    if self.coord_to_idx(tx, y, t) in blocked_cells: continue
                     car_list.append(f"(blocked {grid_cell})")
+                    blocked_cells.add(tx * (self.num_lanes * self.width) + y * self.width + t)
                 x -= speed
                 x %= self.width
+
+        #middle = time()
+        #print("Car list", middle - start)
 
         moves = {"up": -1, "down": 1, "forward1": 0}
         move_list = []
         for y in range(self.num_lanes):
-            for x in range(self.width):
+            for x in range(1, self.width):
                 for t in range(self.width - 1):
+                    if x < self.width - 1 - t * 3 or x > self.width - 1 - t: continue
                     cur_pos = self.get_grid_cell(x, y, t)
                     for move, dy in moves.items():
+                        if move == "up" and y == 0: continue
+                        if move == "down" and y == self.num_lanes - 1: continue
+                        
                         ny = min(self.num_lanes - 1, max(0, y + dy))
                         nx = (x - 1) % self.width
                         nt = t + 1
+
+                        if self.coord_to_idx(nx, ny, nt) in blocked_cells: continue
+
                         n_pos = self.get_grid_cell(nx, ny, nt)
                         move_list.append(f"({move}_next {cur_pos} {n_pos})")
                         if move != "forward1": continue
@@ -255,9 +272,12 @@ class GeneratePDDL_Stationary :
                         for i in range(2, 4):
                             nx -= 1
                             if nx < 0: break
+                            if self.coord_to_idx(nx, ny, nt) in blocked_cells: continue
+
                             n_pos = self.get_grid_cell(nx, ny, nt)
                             move_list.append(f"(forward{i}_next {cur_pos} {n_pos})")
-                     
+        #end = time()
+        #print("move list", end - middle)
         car_list.extend(move_list)
 
         return ' '.join(car_list) 
@@ -354,34 +374,31 @@ def generateDomainPDDLFile(gen : GeneratePDDL_Stationary):
         name="UP", 
         parameters = (("agent", "agent"), ("p1", "gridcell"), ("p2", "gridcell")), 
         precondition_string = "(and (at ?p1 ?agent) (up_next ?p1 ?p2) (not (blocked ?p2)) )", 
-        effect_string="(and (not (at ?p1 ?agent)) (at ?p2 ?agent) (not (blocked ?p1)) (blocked ?p2) )"
+        effect_string="(and (not (at ?p1 ?agent)) (at ?p2 ?agent) )"
     )
     gen.addAction(
         name="DOWN", 
         parameters = (("agent", "agent"), ("p1", "gridcell"), ("p2", "gridcell")), 
         precondition_string = "(and (at ?p1 ?agent) (down_next ?p1 ?p2) (not (blocked ?p2)) )", 
-        effect_string="(and (not (at ?p1 ?agent)) (at ?p2 ?agent) (not (blocked ?p1)) (blocked ?p2) )"
+        effect_string="(and (not (at ?p1 ?agent)) (at ?p2 ?agent) )"
     )
     gen.addAction(
         name="FORWARD1", 
         parameters = (("agent", "agent"), ("p1", "gridcell"), ("p2", "gridcell")), 
         precondition_string = "(and (at ?p1 ?agent) (forward1_next ?p1 ?p2) (not (blocked ?p2)) )", 
-        effect_string="(and (not (at ?p1 ?agent)) (at ?p2 ?agent) (not (blocked ?p1)) (blocked ?p2) )"
+        effect_string="(and (not (at ?p1 ?agent)) (at ?p2 ?agent) )"
     )
     gen.addAction(
         name="FORWARD2", 
-        parameters = (("agent", "agent"), ("p1t1", "gridcell"), ("p2t2", "gridcell"), ("p3t2", "gridcell")), 
-        precondition_string = "(and (at ?p1t1 ?agent) (forward2_next ?p1t1 ?p3t2) (forward1_next ?p1t1 ?p2t2) (not (blocked ?p2t2)) (not (blocked ?p3t2)) )", 
-        effect_string="(and (not (at ?p1t1 ?agent)) (at ?p3t2 ?agent) (not (blocked ?p1t1)) (blocked ?p3t2) )"
+        parameters = (("agent", "agent"), ("p1t1", "gridcell"), ("p3t2", "gridcell")), 
+        precondition_string = "(and (at ?p1t1 ?agent) (forward2_next ?p1t1 ?p3t2)  (not (blocked ?p3t2)) )", 
+        effect_string="(and (not (at ?p1t1 ?agent)) (at ?p3t2 ?agent) )"
     )
     gen.addAction(
         name="FORWARD3", 
-        parameters = (("agent", "agent"), ("p1t1", "gridcell"), ("p2t2", "gridcell"), ("p3t2", "gridcell"), ("p4t2", "gridcell")), 
-        precondition_string = "(and \
-            (at ?p1t1 ?agent) (forward3_next ?p1t1 ?p4t2) (forward1_next ?p1t1 ?p2t2) (forward2_next ?p1t1 ?p3t2) \
-            (not (blocked ?p2t2)) (not (blocked ?p3t2)) (not (blocked ?p4t2)) \
-        )", 
-        effect_string="(and (not (at ?p1t1 ?agent)) (at ?p4t2 ?agent) (not (blocked ?p1t1)) (blocked ?p4t2) )"
+        parameters = (("agent", "agent"), ("p1t1", "gridcell"), ("p4t2", "gridcell")), 
+        precondition_string = "(and (at ?p1t1 ?agent) (forward3_next ?p1t1 ?p4t2) (not (blocked ?p4t2)) )", 
+        effect_string="(and (not (at ?p1t1 ?agent)) (at ?p4t2 ?agent) )"
     )
 
     gen.generateDomainPDDL()
