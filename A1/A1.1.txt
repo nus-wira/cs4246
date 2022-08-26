@@ -54,22 +54,35 @@ Move(A, B, Table)
 Move(B, Table, A)
 
 2.
+Assume we have object types:
+address
+value
+
 a.
-Assign(var1, var2)
-Precondition: Value(var1, val1) ^ Value(var2, val2)
-Effect: Value(var2, val1) ^ not Value(var2, val2)
+Assign(a1, a2, val1, val2)
+Precondition:   
+    Variable(a1) ^ Variable(a2) ^ Value(val1) ^ Value(val2) 
+    ^ HasValue(a1, val1) ^ HasValue(a2, val2)
+Effect: HasValue(a2, val1) ^ not HasValue(a2, val2)
 
 b.
-Have another action schema for object creation
-Create(var)
-Precondition:
-Effect: Value(var, null)
+Assume we have a value null.
 
-Initial state is Value(var1, val1) ^ Value(var2, val2)
-Goal state is Value(var1, val2) ^ Value(var2, val1)
+Have another action schema for object creation
+Create(a)
+Precondition: Address(a) ^ not Variable(a)
+Effect: Variable(a) ^ HasValue(a, null)
+
+Initial state:
+Variable(a1) ^ Variable(a2) ^ Value(val1) ^ Value(val2) 
+^ HasValue(a1, val1) ^ HasValue(a2, val2) 
+^ Address(a3) ^ Value(null)
+
+Goal state:
+HasValue(a1, val2) ^ HasValue(a2, val1)
 
 Then the following plan is valid for the task
-Create(temp)
-Assign(var1, temp)
-Assign(var2, var1)
-Assign(temp, var2)
+Create(a3)
+Assign(a1, a3, val1, null)
+Assign(a2, a1, val2, val1)
+Assign(a3, a2, val1, val2)
