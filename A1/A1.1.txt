@@ -20,8 +20,18 @@ a.
 )
 ) 
 
+(define (problem swap_blocks) 
+ (:domain blocks_world) 
+(:objects A B  - block
+ T - table
+ ) 
+(:init (on A B)(on B T)(clear A)(clear T)(is_table T)) 
+(:goal (and (on B A)(on A T))) 
+) 
+
 b.
-Clear(Table) and IsTable(Table) are always true
+Clear(Table) and IsTable(Table) are always true,
+and are assumed as such in all states.
 
 
 On(A, B) ^ On(B, Table) ^ Clear(A)
