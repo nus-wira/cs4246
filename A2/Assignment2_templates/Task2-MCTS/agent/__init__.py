@@ -137,16 +137,21 @@ class MonteCarloTreeSearch:
                         return newNode
         return cur_node
 
-    def backpropagate(self, node, reward):
+    def backpropagate(self, node : Node, reward):
         '''
         FILL ME : This function should implement the backpropation step of MCTS.
                   Update the values of relevant variables in Node Class to complete this function
         '''        
+        if node is None: return
+        node.totalReward += reward
+        node.numVisits += 1
+        self.backpropagate(node.parent, reward)
 
-    def chooseBestActionNode(self, node, explorationValue):
+    def chooseBestActionNode(self, node : Node, explorationValue):
         random = self.random
         bestValue = float("-inf")
         bestNodes = []
+        N = node.numVisits
         for child in node.children.values():
             '''
             FILL ME : Populate the list bestNodes with all children having maximum value
@@ -155,6 +160,14 @@ class MonteCarloTreeSearch:
                        All the nodes that have the largest value should be included in the list bestNodes.
                        We will then choose one of the nodes in this list at random as the best action node. 
             '''
+            child_value = child.totalReward / child.numVisits
+            child_value += explorationValue * math.sqrt(math.log(N) / child.numVisits)
+            if child_value < bestValue: continue
+            if child_value != bestValue:
+                bestNodes.clear()
+                
+            bestValue = child_value
+            bestNodes.append(child)
         return random.choice(bestNodes)
 
 try:

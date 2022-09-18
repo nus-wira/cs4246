@@ -1,0 +1,82 @@
+1.
+a)
+EU(Eat) = 0.9 * 10 - 0.1 * 100 = -1
+EU(No Eat) = 0
+Since EU(Eat) < EU(No Eat), she should not eat the mooncake.
+
+b)
+{ [Decision Node]
+  No Smell : { [Decision Node]
+    Eat : { [Chance Node]
+      Durian : { [Value Node]
+        -100
+      }
+      No Durian : { [Value Node]
+        10
+      }
+    },
+    No Eat : { [Value Node]
+      0
+    }
+  }
+  Smell : { [Chance Node]
+    "Durian" : { [Decision Node] 
+      Eat : { [Chance Node]
+        Durian : { [Value Node]
+          -100
+        }
+        No Durian : { [Value Node]
+          10
+        }
+      },
+      No Eat : { [Value Node]
+        0
+      }
+    },
+    "No Durian" : { [Decision Node]
+      Eat : { [Chance Node]
+        Durian : { [Value Node]
+          -100
+        }
+        No Durian : { [Value Node]
+          10
+        }
+      },
+      No Eat : { [Value Node]
+        0
+      }
+    }
+  }
+}
+
+c)
+SD = Smell Durian
+D = Durian
+P(D) = 0.1
+P(SD|~D) = 0.2
+P(~SD|~D) = 1 - 0.2 = 0.8
+P(~SD|D) = 0.3
+
+P(~SD) = P(~SD|D) * P(D) + P(~SD|~D) * P(~D)
+= 0.3 * 0.1 + 0.8 * 0.9
+= 0.75
+
+X = P(D|~SD) 
+= P(~SD|D) * P(D) / P(~SD)
+= 0.3 * 0.1 / 0.75
+= 0.04
+
+d)
+EU(Eat|~SD) = (1 - 0.04) * 10 - 0.04 * 100 = 5.6
+EU(No Eat|~SD) = 0
+Y = MEU(a|~SD) = 5.6
+
+e)
+P(D|SD) = P(SD|D) * P(D) / P(SD)
+= (1 - 0.3) * 0.1 / (1 - 0.75)
+= 0.28
+EU(Eat|SD) = (1 - 0.28) * 10 - 0.28 * 100 = -20.4
+EU(No Eat|SD) = 0
+MEU(a|SD) = 0
+
+VPI(Smell) = 0.25 * 0 + 0.75 * Y = 0.75Y
