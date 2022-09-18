@@ -79,4 +79,77 @@ EU(Eat|SD) = (1 - 0.28) * 10 - 0.28 * 100 = -20.4
 EU(No Eat|SD) = 0
 MEU(a|SD) = 0
 
-VPI(Smell) = 0.25 * 0 + 0.75 * Y = 0.75Y
+VPI(Smell) = 0.25 * 0 + 0.75 * Y - 0 = 0.75Y
+
+
+2.
+
+b) From state 1 and 2, action b and a should be taken respectively to maximise rewards.
+c) 
+U_i(3) = R(3) = 0 for all i
+
+i=1
+pi_1(s) = b, for s=1,2
+U_1(1) = R(1) + 0.8U_1(1) + 0.2U_1(3)
+= -1 + 0.8U_1(1)
+=> U_1(1) = -5
+U_1(2) = R(2) + 0.8U_1(2) + 0.2U_1(3)
+= -2 + 0.8U_1(2)
+=> U_1(2) = -10
+Taking action a at state 1,
+Q_1(1,a) = R(1) + 0.7U_1(2) + 0.3U_1(1)
+= -1 + 0.7(-10) + 0.3(-5)
+= -9.5
+Taking action a at state 2,
+Q_1(2,a) = R(2) + 0.7U_1(1) + 0.3U_1(2)
+= -2 + 0.7(-5) + 0.3(-10)
+= -8.5
+No changes for pi_2(1) = b since Q(1,a) < Q(1,b)
+Q(2,b) > Q(2,a), so pi_2(2) = a
+unchanged = false
+
+i=2
+pi_2(1) = b
+pi_2(2) = a
+U_2(1) = U_1(1) = -5
+U_2(2) = R(2) + 0.7U_2(1) + 0.3U_2(2)
+= -2 + 0.7(-5) + 0.3U_2(2)
+= -55/7 = -7.857
+Taking action a at state 1,
+Q_2(1,a) = R(1) + 0.7U_2(2) + 0.3U_2(1)
+= -1 + 0.7(-55/7) + 0.3(-5)
+= -8
+Taking action b at state 2,
+Q_2(2,b) = R(2) + 0.8U_2(2) + 0.2U_2(3)
+= -2 + 0.8(-55/7) + 0.2(0)
+= -58/7 = -8.286
+No changes for pi_2(1) since Q(1,a) < Q(2,b)
+No changes for pi_2(2) since Q(2,b) < Q(2,a)
+unchanged=true
+
+pi*(1) = b
+pi*(2) = a
+U(1) = -5
+U(2) = -55/7 = -7.857
+
+d)
+U_i(3) = R(3) = 0 for all i
+
+i=1
+pi_1(s) = a, for s=1,2
+U_1(1) = R(1) + 0.7U_1(2) + 0.3U_1(1)
+= -1 + 0.7U_1(2) + 0.3U_1(1)
+U_1(2) = R(2) + 0.7U_1(1) + 0.3U_1(2)
+= -2 + 0.7U_1(1) + 0.3U_1(2)
+0.7U_1(1) - 0.7U_1(2) = -1
+-0.7U_1(1) + 0.7U_1(2) = -2
+No values of U_1(1) and U_1(2) can satisfy these equations without discounting.
+With a discount factor g, the equations instead become
+(1 - 0.3g)U_1(1) - 0.7gU_1(2) = -1
+-0.7gU_1(1) + (1 - 0.3g)U_1(2) = -2
+
+Solving
+(1 - g)U_1(1) + (1 - g)U_1(2) = -3
+U_1(1) + U_1(2) = -3/(1-g)
+U_1(1) + (0.3g - 1)/(0.7g) * U_1(2) = 2/(0.7g)
+(0.4g + 1)/(0.7g) U_1(2) = 
