@@ -42,7 +42,8 @@ class ReplayBuffer():
         FILL ME : This function should initialize the replay buffer `self.buffer` with maximum size of `buffer_limit` (`int`).
                   len(self.buffer) should give the current size of the buffer `self.buffer`.
         '''
-        pass
+        self.buffer = []
+        self.buffer_limit = buffer_limit
 
     def push(self, transition):
         '''
@@ -55,7 +56,9 @@ class ReplayBuffer():
         Output:
             * None
         '''
-        pass
+        if len(self.buffer) == self.buffer_limit:
+            self.buffer.pop(0)
+        self.buffer.append(transition)
     
     def sample(self, batch_size):
         '''
@@ -73,7 +76,7 @@ class ReplayBuffer():
                 * `dones`       (`torch.tensor` [batch_size, 1])
               All `torch.tensor` (except `actions`) should have a datatype `torch.float` and resides in torch device `device`.
         '''
-        pass
+        return random.sample(self.buffer, batch_size)
 
     def __len__(self):
         '''
@@ -122,7 +125,9 @@ class BaseAgent(Base):
         Output: action (`Action` or `int`): representing the action to be taken.
                 if action is of type `int`, it should be less than `self.num_actions`
         '''
-        pass
+        if random.random() > epsilon:
+            return self.forward(state)
+        return random.randrange(self.num_actions)
 
 class DQN(BaseAgent):
     def construct(self):
