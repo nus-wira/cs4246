@@ -76,7 +76,11 @@ class ReplayBuffer():
                 * `dones`       (`torch.tensor` [batch_size, 1])
               All `torch.tensor` (except `actions`) should have a datatype `torch.float` and resides in torch device `device`.
         '''
-        return random.sample(self.buffer, batch_size)
+
+        lst = random.sample(self.buffer, batch_size)
+        
+        lst = [torch.tensor(i).to(device) for i in zip(*lst)]
+        return lst
 
     def __len__(self):
         '''
@@ -112,7 +116,7 @@ class Base(nn.Module):
         return x.view(1, -1).size(1)
 
 class BaseAgent(Base):
-    def act(self, state, epsilon=0.0):
+    def act(self, state, epsilon=0.0):    
         if not isinstance(state, torch.FloatTensor):
             state = torch.from_numpy(state).float().unsqueeze(0).to(device)
         '''
@@ -125,8 +129,12 @@ class BaseAgent(Base):
         Output: action (`Action` or `int`): representing the action to be taken.
                 if action is of type `int`, it should be less than `self.num_actions`
         '''
+        # print(state.shape)
         if random.random() > epsilon:
-            return self.forward(state)
+            output = self.forward(state)
+            # print(output)
+            # print(int(torch.argmax(output[0])))
+            return int(torch.argmax(output[0]))
         return random.randrange(self.num_actions)
 
 class DQN(BaseAgent):
@@ -148,7 +156,7 @@ class ConvDQN(DQN):
         super().construct()
 
 
-def compute_loss(model, target, states, actions, rewards, next_states, dones):
+def compute_loss(model: ConvDQN, target: ConvDQN, states, actions, rewards, next_states, dones):
     '''
     FILL ME : This function should compute the DQN loss function for a batch of experiences.
 
@@ -167,7 +175,39 @@ def compute_loss(model, target, states, actions, rewards, next_states, dones):
         * MSE Loss  : https://pytorch.org/docs/stable/nn.html#torch.nn.MSELoss
         * Huber Loss: https://pytorch.org/docs/stable/nn.html#torch.nn.SmoothL1Loss
     '''
-    pass
+    # model_outputs = []
+    # target_outputs = []
+    # for i in range(states.shape[0]):
+    #     action_i = actions[i, 0].int()
+    #     model_q_vals = model.forward(states[i:i+1])[0]
+    #     target_q_vals = target.forward(next_states[i:i+1])[0]
+
+    #     model_q_a = model_q_vals[action_i]
+    #     target_q_a = torch.max(target_q_vals)
+
+    #     model_outputs.append(model_q_a)
+    #     target_outputs.append(target_q_a)
+
+    # model_outputs = torch.Tensor(model_outputs).reshape(-1, 1).to(device)
+    # target_outputs = torch.Tensor(target_outputs).reshape(-1, 1).to(device)
+
+    # target_vals = rewards + gamma * target_outputs
+
+    model_outputs = model.forward(states.float())
+    model_q_vals = model_outputs.gather(1, actions)
+
+    target_outputs = target.forward(next_states.float())
+    target_q_vals, _ = torch.max(target_outputs, dim=1)
+    target_q_vals = target_q_vals.reshape(-1, 1)
+
+    target_vals = rewards + gamma * target_q_vals
+
+    print(model_outputs, actions, model_q_vals, target_q_vals, target_vals)
+
+    # print(model_outputs.shape, model_q_vals.shape, target_outputs.shape, target_q_vals.shape, target_vals.shape)
+
+    loss_fn = nn.SmoothL1Loss()
+    return autograd.Variable(loss_fn(model_q_vals, target_vals), requires_grad=True)
 
 def optimize(model, target, memory, optimizer):
     '''
