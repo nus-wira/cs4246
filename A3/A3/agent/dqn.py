@@ -1,3 +1,11 @@
+# Name          : Wira Azmoon Ahmad
+# Matric. No.   : A0149286R
+# Tut. Group    : 1
+# Name          : Sagar Sureka  
+# Matric. No.   : A0206443M
+# Tut. Group    : 1
+# Collaborators : None
+
 import gym
 import gym_grid_driving
 import collections
