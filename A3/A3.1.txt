@@ -50,3 +50,24 @@ b'(s2) = (alpha') (0.2/0.4) * (0.7*0.6 + 0.4*0.4) = 0.29(alpha')
 (0.56+0.29)alpha' = 1
 alpha' = 1/0.85
 b'(s') = (0.65882, 0.34118)
+
+
+1.2.2
+
+360/45 = 8
+360/15 = 24
+
+The state space is S = [0, 359]^2, where a state integer tuple s in S describes the pan angle and the tilt angle respectively.
+There are 4 actions A = {R, L, U, D} corresponding to pan right, pan left, tilt up, and tilt down respectively.
+If a = R, s = (i, j), s' = ((i + 45)%360, j)
+P(s'|s, a) = 0.2
+If a = U, s = (i, j), s' = (i, (j + 15)%360)
+P(s'|s, a) = 0.4
+
+b)
+Let P = {0, ..., 7} and T = {0, ..., 23} be discretised views corresponding right/left and up/down respectively.
+The observation space O = P x T an observation, where |O| = 24 * 8
+Each observation (i, j) in S is adjacent to all of ((i+1)%8, j), ((i-1)%8, j), (i, (j+1)%24), (i, (j-1)%24)
+via actions R, L, U, D respectively.
+If e = (i, j), s = (k, m), where i * 45 <= k < (i+1) * 45 and j * 15 <= m < (j+1) * 15
+P(e|s) = 1
