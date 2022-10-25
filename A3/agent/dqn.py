@@ -129,11 +129,9 @@ class BaseAgent(Base):
         Output: action (`Action` or `int`): representing the action to be taken.
                 if action is of type `int`, it should be less than `self.num_actions`
         '''
-        # print(state.shape)
+
         if random.random() > epsilon:
             output = self.forward(state)
-            # print(output)
-            # print(int(torch.argmax(output[0])))
             return int(torch.argmax(output[0]))
         return random.randrange(self.num_actions)
 
@@ -175,23 +173,6 @@ def compute_loss(model: ConvDQN, target: ConvDQN, states, actions, rewards, next
         * MSE Loss  : https://pytorch.org/docs/stable/nn.html#torch.nn.MSELoss
         * Huber Loss: https://pytorch.org/docs/stable/nn.html#torch.nn.SmoothL1Loss
     '''
-    # model_outputs = []
-    # target_outputs = []
-    # for i in range(states.shape[0]):
-    #     action_i = actions[i, 0].int()
-    #     model_q_vals = model.forward(states[i:i+1])[0]
-    #     target_q_vals = target.forward(next_states[i:i+1])[0]
-
-    #     model_q_a = model_q_vals[action_i]
-    #     target_q_a = torch.max(target_q_vals)
-
-    #     model_outputs.append(model_q_a)
-    #     target_outputs.append(target_q_a)
-
-    # model_outputs = torch.Tensor(model_outputs).reshape(-1, 1).to(device)
-    # target_outputs = torch.Tensor(target_outputs).reshape(-1, 1).to(device)
-
-    # target_vals = rewards + gamma * target_outputs
 
     model_outputs = model.forward(states.float())
     model_q_vals = model_outputs.gather(1, actions)
@@ -200,14 +181,10 @@ def compute_loss(model: ConvDQN, target: ConvDQN, states, actions, rewards, next
     target_q_vals, _ = torch.max(target_outputs, dim=1)
     target_q_vals = target_q_vals.reshape(-1, 1)
 
-    target_vals = rewards + gamma * target_q_vals
-
-    print(model_outputs, actions, model_q_vals, target_q_vals, target_vals)
-
-    # print(model_outputs.shape, model_q_vals.shape, target_outputs.shape, target_q_vals.shape, target_vals.shape)
+    target_vals = rewards + (~dones) * gamma * target_q_vals
 
     loss_fn = nn.SmoothL1Loss()
-    return autograd.Variable(loss_fn(model_q_vals, target_vals), requires_grad=True)
+    return loss_fn(model_q_vals, target_vals)
 
 def optimize(model, target, memory, optimizer):
     '''
