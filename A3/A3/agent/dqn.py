@@ -189,7 +189,8 @@ def compute_loss(model: ConvDQN, target: ConvDQN, states, actions, rewards, next
     target_q_vals, _ = torch.max(target_outputs, dim=1)
     target_q_vals = target_q_vals.reshape(-1, 1)
 
-    target_vals = rewards + (~dones) * gamma * target_q_vals
+    # print(rewards.dtype, dones.int().float().dtype, target_q_vals.dtype)
+    target_vals = rewards.float() + (~dones).int().float() * gamma * target_q_vals
 
     loss_fn = nn.SmoothL1Loss()
     return loss_fn(model_q_vals, target_vals)
